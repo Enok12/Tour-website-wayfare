@@ -17,6 +17,15 @@ export interface SessionUser {
   isActive: boolean;
 }
 
+export interface PackageLocationDto {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string; // Prisma Decimal is serialized as a string over JSON
+  isActive: boolean;
+  sortOrder: number;
+}
+
 export interface PackageAttributeDto {
   id: string;
   name: string;
@@ -43,13 +52,13 @@ export interface PackageDto {
   slug: string;
   description: string;
   durationDays: number;
-  price: string; // Prisma Decimal is serialized as a string over JSON
   currency: string;
   coverImage: string | null;
   galleryImages: string[];
   includedServices: string[];
   excludedServices: string[];
   isActive: boolean;
+  locations: PackageLocationDto[];
   attributes: PackageAttributeDto[];
   accommodations: PackageAccommodationDto[];
   createdAt: string;
@@ -90,6 +99,12 @@ export interface AssignmentDto {
   };
 }
 
+export interface TourRequestPackageLocationDto {
+  id: string;
+  priceAtBooking: string;
+  packageLocation: { id: string; name: string; price: string };
+}
+
 export interface TourRequestPackageAttributeDto {
   id: string;
   priceAtBooking: string;
@@ -102,6 +117,7 @@ export interface TourRequestPackageDto {
   accommodation: { id: string; name: string; image: string | null; price: string };
   accommodationPriceAtBooking: string;
   priceAtBooking: string;
+  locations: TourRequestPackageLocationDto[];
   attributes: TourRequestPackageAttributeDto[];
 }
 

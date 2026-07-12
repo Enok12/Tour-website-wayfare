@@ -35,13 +35,19 @@ export function PackageForm({ initial }: { initial?: PackageDto }) {
           name: initial.name,
           description: initial.description,
           durationDays: initial.durationDays,
-          price: Number(initial.price),
           currency: initial.currency,
           coverImage: initial.coverImage ?? "",
           galleryImages: initial.galleryImages,
           includedServices: initial.includedServices,
           excludedServices: initial.excludedServices,
           isActive: initial.isActive,
+          locations: initial.locations.map((loc) => ({
+            id: loc.id,
+            name: loc.name,
+            description: loc.description ?? "",
+            price: Number(loc.price),
+            isActive: loc.isActive,
+          })),
           attributes: initial.attributes.map((attr) => ({
             id: attr.id,
             name: attr.name,
@@ -65,9 +71,15 @@ export function PackageForm({ initial }: { initial?: PackageDto }) {
           includedServices: [],
           excludedServices: [],
           isActive: true,
+          locations: [],
           attributes: [],
           accommodations: [],
         },
+  });
+
+  const { fields: locationFields, append: appendLocation, remove: removeLocation } = useFieldArray({
+    control,
+    name: "locations",
   });
 
   const { fields: attributeFields, append: appendAttribute, remove: removeAttribute } = useFieldArray({
@@ -117,12 +129,6 @@ export function PackageForm({ initial }: { initial?: PackageDto }) {
           <Label htmlFor="durationDays">Duration (days)</Label>
           <Input id="durationDays" type="number" min={1} {...register("durationDays")} />
           {errors.durationDays && <p className="text-xs text-danger">{errors.durationDays.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="price">Base price</Label>
-          <Input id="price" type="number" min={0} step="0.01" {...register("price")} />
-          {errors.price && <p className="text-xs text-danger">{errors.price.message}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -177,6 +183,82 @@ export function PackageForm({ initial }: { initial?: PackageDto }) {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
+          <Label>Locations</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => appendLocation({ name: "", description: "", price: 0, isActive: true })}
+          >
+            <Plus className="h-4 w-4" /> Add location
+          </Button>
+        </div>
+        <p className="text-xs text-text-secondary">
+          The itinerary stops that make up this package (e.g. &quot;Temple of the Tooth&quot;).
+          Included by default for customers, who can deselect ones they don&apos;t want (at least one
+          must stay selected) — the package&apos;s price is the sum of the locations they keep.
+        </p>
+        {errors.locations?.message && (
+          <p className="text-xs text-danger">{errors.locations.message}</p>
+        )}
+
+        {locationFields.length === 0 && (
+          <p className="text-sm text-text-secondary">No locations yet — add at least one.</p>
+        )}
+
+        {locationFields.map((field, index) => (
+          <div key={field.id} className="grid gap-3 rounded-lg border border-border-subtle p-3 sm:grid-cols-[2fr_2fr_1fr_auto_auto]">
+            <div className="space-y-1">
+              <Label htmlFor={`locations.${index}.name`}>Name</Label>
+              <Input id={`locations.${index}.name`} {...register(`locations.${index}.name`)} />
+              {errors.locations?.[index]?.name && (
+                <p className="text-xs text-danger">{errors.locations[index]?.name?.message}</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`locations.${index}.description`}>Description (optional)</Label>
+              <Input id={`locations.${index}.description`} {...register(`locations.${index}.description`)} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`locations.${index}.price`}>Price</Label>
+              <Input
+                id={`locations.${index}.price`}
+                type="number"
+                min={0}
+                step="0.01"
+                {...register(`locations.${index}.price`)}
+              />
+              {errors.locations?.[index]?.price && (
+                <p className="text-xs text-danger">{errors.locations[index]?.price?.message}</p>
+              )}
+            </div>
+            <div className="flex items-end gap-2 pb-1.5">
+              <Controller
+                control={control}
+                name={`locations.${index}.isActive`}
+                render={({ field: checkboxField }) => (
+                  <Checkbox
+                    checked={checkboxField.value}
+                    onCheckedChange={checkboxField.onChange}
+                    id={`locations.${index}.isActive`}
+                  />
+                )}
+              />
+              <Label htmlFor={`locations.${index}.isActive`} className="font-normal">
+                Active
+              </Label>
+            </div>
+            <div className="flex items-end pb-1.5">
+              <Button type="button" variant="outline" size="sm" onClick={() => removeLocation(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <Label>Customizable options</Label>
           <Button
             type="button"
@@ -189,7 +271,7 @@ export function PackageForm({ initial }: { initial?: PackageDto }) {
         </div>
         <p className="text-xs text-text-secondary">
           Selectable sub-locations/activities customers can add to this package (e.g. &quot;Cultural
-          Dance Show&quot;), each with its own price on top of the base price.
+          Dance Show&quot;), each with its own price on top of the price of the locations visited.
         </p>
 
         {attributeFields.length === 0 && (
@@ -270,8 +352,8 @@ export function PackageForm({ initial }: { initial?: PackageDto }) {
         </div>
         <p className="text-xs text-text-secondary">
           Hotels/stays customers choose one of for this package (e.g. &quot;Jetwing Kandy Gallery -
-          Luxury&quot;), shown to customers as a picture tile with its own price on top of the base
-          price.
+          Luxury&quot;), shown to customers as a picture tile with its own price on top of the
+          package price.
         </p>
 
         {accommodationFields.length === 0 && (

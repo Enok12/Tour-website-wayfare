@@ -9,11 +9,13 @@ const emptyToUndefined = (val: unknown) => (val === "" ? undefined : val);
 const optionalCoercedDate = z.preprocess(emptyToUndefined, z.coerce.date().optional());
 const optionalCoercedPositiveNumber = z.preprocess(emptyToUndefined, z.coerce.number().positive().optional());
 
-// One package selected in the "Customize Your Tour" form, along with
-// whichever of that package's priced attributes (sub-locations/activities)
-// the customer picked, and their one required accommodation choice.
+// One package selected in the "Customize Your Tour" form: which of the
+// package's itinerary locations the customer kept (at least one — this is
+// what the package's price is built from), whichever optional attributes
+// they added on top, and their one required accommodation choice.
 export const tourRequestPackageSelectionSchema = z.object({
   packageId: z.string().min(1),
+  locationIds: z.array(z.string()).min(1, "Select at least one location to visit"),
   accommodationId: z.string().min(1, "Select an accommodation for this package"),
   attributeIds: z.array(z.string()).default([]),
 });

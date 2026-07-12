@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { usePackages, useDeletePackage } from "@/hooks/use-packages";
+import { packageStartingPrice } from "@/lib/package-pricing";
 
 export default function AdminPackagesPage() {
   const { data: packages, isLoading } = usePackages();
@@ -79,7 +80,7 @@ export default function AdminPackagesPage() {
                 <TableCell className="font-medium">{pkg.name}</TableCell>
                 <TableCell>{pkg.durationDays} days</TableCell>
                 <TableCell>
-                  {pkg.currency} {Number(pkg.price).toLocaleString()}
+                  {pkg.currency} {packageStartingPrice(pkg).toLocaleString()}
                 </TableCell>
                 <TableCell>
                   <Badge variant={pkg.isActive ? "success" : "secondary"}>

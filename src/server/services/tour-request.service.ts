@@ -26,6 +26,15 @@ export const tourRequestService = {
         throw new ValidationError("One of the selected packages is not available");
       }
 
+      const locationMap = new Map(pkg.locations.map((loc) => [loc.id, loc]));
+      const selectedLocations = selection.locationIds.map((locationId) => {
+        const location = locationMap.get(locationId);
+        if (!location || !location.isActive) {
+          throw new ValidationError(`One of the selected locations for ${pkg.name} is not available`);
+        }
+        return location;
+      });
+
       const attributeMap = new Map(pkg.attributes.map((attr) => [attr.id, attr]));
       const selectedAttributes = selection.attributeIds.map((attributeId) => {
         const attribute = attributeMap.get(attributeId);
@@ -41,11 +50,11 @@ export const tourRequestService = {
       }
 
       const priceAtBooking =
-        Number(pkg.price) +
+        selectedLocations.reduce((sum, loc) => sum + Number(loc.price), 0) +
         selectedAttributes.reduce((sum, attr) => sum + Number(attr.price), 0) +
         Number(accommodation.price);
 
-      return { pkg, selectedAttributes, accommodation, priceAtBooking };
+      return { pkg, selectedLocations, selectedAttributes, accommodation, priceAtBooking };
     });
 
     const estimatedTotal = selections.reduce((sum, s) => sum + s.priceAtBooking, 0);
@@ -70,6 +79,12 @@ export const tourRequestService = {
               accommodation: { connect: { id: s.accommodation.id } },
               accommodationPriceAtBooking: s.accommodation.price,
               priceAtBooking: s.priceAtBooking,
+              locations: {
+                create: s.selectedLocations.map((loc) => ({
+                  packageLocation: { connect: { id: loc.id } },
+                  priceAtBooking: loc.price,
+                })),
+              },
               attributes: {
                 create: s.selectedAttributes.map((attr) => ({
                   packageAttribute: { connect: { id: attr.id } },

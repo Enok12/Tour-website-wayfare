@@ -8,6 +8,25 @@ const prisma = new PrismaClient({ adapter });
 
 /**
  * The package upserts below are idempotent on slug, but Prisma's nested
+ * `locations: { create: [...] }` only runs on the `create` branch of an
+ * upsert -- if the package already exists from an earlier seed run (e.g.
+ * from before this schema had locations), its `update: {}` no-op branch
+ * runs instead and locations are silently skipped. This backfills them
+ * whenever a package has none yet.
+ */
+async function ensureLocations(
+  packageId: string,
+  existing: { id: string }[],
+  locs: { name: string; description?: string; price: number; sortOrder: number }[]
+) {
+  if (existing.length > 0) return;
+  await prisma.packageLocation.createMany({
+    data: locs.map((l) => ({ ...l, packageId })),
+  });
+}
+
+/**
+ * The package upserts below are idempotent on slug, but Prisma's nested
  * `attributes: { create: [...] }` only runs on the `create` branch of an
  * upsert -- if the package already exists from an earlier seed run (e.g.
  * from before this schema had attributes), its `update: {}` no-op branch
@@ -112,12 +131,33 @@ async function main() {
       description:
         "Five days through Bali's rice terraces, temples, and beaches, with a private guide arranging every detail.",
       durationDays: 5,
-      price: 1290,
       currency: "USD",
       includedServices: ["Private guide", "Airport transfers", "4-star hotel", "Daily breakfast"],
       excludedServices: ["International flights", "Travel insurance"],
       isActive: true,
       coverImage: "https://picsum.photos/seed/bali-highlights/800/600",
+      locations: {
+        create: [
+          {
+            name: "Ubud Rice Terraces",
+            description: "Guided walk through the Tegallalang rice terraces.",
+            price: 450,
+            sortOrder: 0,
+          },
+          {
+            name: "Tanah Lot Temple",
+            description: "Sunset visit to the iconic sea temple.",
+            price: 380,
+            sortOrder: 1,
+          },
+          {
+            name: "Seminyak Beach Day",
+            description: "Beach club access and free time in Seminyak.",
+            price: 460,
+            sortOrder: 2,
+          },
+        ],
+      },
       attributes: {
         create: [
           {
@@ -168,8 +208,32 @@ async function main() {
         ],
       },
     },
-    include: { attributes: true, accommodations: true },
+    include: { locations: true, attributes: true, accommodations: true },
   });
+
+  await ensureLocations(baliPkg.id, baliPkg.locations, [
+    {
+      name: "Ubud Rice Terraces",
+      description: "Guided walk through the Tegallalang rice terraces.",
+      price: 450,
+      sortOrder: 0,
+    },
+    {
+      name: "Tanah Lot Temple",
+      description: "Sunset visit to the iconic sea temple.",
+      price: 380,
+      sortOrder: 1,
+    },
+    {
+      name: "Seminyak Beach Day",
+      description: "Beach club access and free time in Seminyak.",
+      price: 460,
+      sortOrder: 2,
+    },
+  ]);
+  if (baliPkg.locations.length === 0) {
+    baliPkg.locations = await prisma.packageLocation.findMany({ where: { packageId: baliPkg.id } });
+  }
 
   await ensureAttributes(baliPkg.id, baliPkg.attributes, [
     {
@@ -229,12 +293,33 @@ async function main() {
       description:
         "A seven-day trek through the Andes to Machu Picchu, with acclimatization days and a small-group guide.",
       durationDays: 7,
-      price: 2150,
       currency: "USD",
       includedServices: ["Trekking guide", "Camping equipment", "All meals on trail"],
       excludedServices: ["Flights to Cusco", "Personal gear"],
       isActive: true,
       coverImage: "https://picsum.photos/seed/peruvian-andes-trek/800/600",
+      locations: {
+        create: [
+          {
+            name: "Sacred Valley Ruins",
+            description: "Guided tour of the Pisac and Ollantaytambo ruins.",
+            price: 700,
+            sortOrder: 0,
+          },
+          {
+            name: "Ollantaytambo Fortress",
+            description: "Exploration of the Inca fortress and terraces.",
+            price: 650,
+            sortOrder: 1,
+          },
+          {
+            name: "Machu Picchu Sanctuary",
+            description: "Full-day guided entry to the Machu Picchu sanctuary.",
+            price: 800,
+            sortOrder: 2,
+          },
+        ],
+      },
       attributes: {
         create: [
           {
@@ -278,8 +363,32 @@ async function main() {
         ],
       },
     },
-    include: { attributes: true, accommodations: true },
+    include: { locations: true, attributes: true, accommodations: true },
   });
+
+  await ensureLocations(trekPkg.id, trekPkg.locations, [
+    {
+      name: "Sacred Valley Ruins",
+      description: "Guided tour of the Pisac and Ollantaytambo ruins.",
+      price: 700,
+      sortOrder: 0,
+    },
+    {
+      name: "Ollantaytambo Fortress",
+      description: "Exploration of the Inca fortress and terraces.",
+      price: 650,
+      sortOrder: 1,
+    },
+    {
+      name: "Machu Picchu Sanctuary",
+      description: "Full-day guided entry to the Machu Picchu sanctuary.",
+      price: 800,
+      sortOrder: 2,
+    },
+  ]);
+  if (trekPkg.locations.length === 0) {
+    trekPkg.locations = await prisma.packageLocation.findMany({ where: { packageId: trekPkg.id } });
+  }
 
   await ensureAttributes(trekPkg.id, trekPkg.attributes, [
     { name: "Extra acclimatization day in Cusco", price: 60, sortOrder: 0 },
@@ -338,9 +447,11 @@ async function main() {
     const sunriseTrek = baliPkg.attributes.find((a) => a.name === "Sunrise trek to Mount Batur")!;
     const baliAccommodation = baliPkg.accommodations.find((a) => a.name === "Seminyak Deluxe Resort")!;
     const trekAccommodation = trekPkg.accommodations.find((a) => a.name === "Sacred Valley Lodge")!;
+    const baliLocationsTotal = baliPkg.locations.reduce((sum, l) => sum + Number(l.price), 0);
+    const trekLocationsTotal = trekPkg.locations.reduce((sum, l) => sum + Number(l.price), 0);
     const baliPriceAtBooking =
-      Number(baliPkg.price) + Number(sunriseTrek.price) + Number(baliAccommodation.price);
-    const trekPriceAtBooking = Number(trekPkg.price) + Number(trekAccommodation.price);
+      baliLocationsTotal + Number(sunriseTrek.price) + Number(baliAccommodation.price);
+    const trekPriceAtBooking = trekLocationsTotal + Number(trekAccommodation.price);
 
     const request = await prisma.tourRequest.create({
       data: {
@@ -354,6 +465,12 @@ async function main() {
               accommodationId: baliAccommodation.id,
               accommodationPriceAtBooking: baliAccommodation.price,
               priceAtBooking: baliPriceAtBooking,
+              locations: {
+                create: baliPkg.locations.map((loc) => ({
+                  packageLocationId: loc.id,
+                  priceAtBooking: loc.price,
+                })),
+              },
               attributes: {
                 create: [{ packageAttributeId: sunriseTrek.id, priceAtBooking: sunriseTrek.price }],
               },
@@ -363,6 +480,12 @@ async function main() {
               accommodationId: trekAccommodation.id,
               accommodationPriceAtBooking: trekAccommodation.price,
               priceAtBooking: trekPriceAtBooking,
+              locations: {
+                create: trekPkg.locations.map((loc) => ({
+                  packageLocationId: loc.id,
+                  priceAtBooking: loc.price,
+                })),
+              },
             },
           ],
         },

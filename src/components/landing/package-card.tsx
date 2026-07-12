@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
+import { packageStartingPrice } from "@/lib/package-pricing";
 import type { PackageDto } from "@/types";
 
 export function PackageCard({ pkg }: { pkg: PackageDto }) {
@@ -31,7 +32,7 @@ export function PackageCard({ pkg }: { pkg: PackageDto }) {
             {pkg.durationDays} {pkg.durationDays === 1 ? "day" : "days"}
           </span>
           <span className="font-display text-base text-brass-600">
-            from {pkg.currency} {Number(pkg.price).toLocaleString()}
+            from {pkg.currency} {packageStartingPrice(pkg).toLocaleString()}
           </span>
         </div>
       </div>

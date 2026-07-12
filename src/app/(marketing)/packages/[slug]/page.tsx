@@ -4,6 +4,7 @@ import { Check, Clock, Home, Star, X as XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { serverFetch } from "@/lib/server-fetch";
 import { groupByStarRating } from "@/lib/group-by-star-rating";
+import { packageStartingPrice } from "@/lib/package-pricing";
 import type { PackageDto } from "@/types";
 
 export default async function PackageDetailPage({
@@ -39,7 +40,7 @@ export default async function PackageDetailPage({
         </div>
         <div className="text-right">
           <p className="font-display text-3xl text-brass-600">
-            {pkg.currency} {Number(pkg.price).toLocaleString()}
+            {pkg.currency} {packageStartingPrice(pkg).toLocaleString()}
           </p>
           <p className="text-xs text-ink-muted">starting from, per person</p>
         </div>
@@ -48,6 +49,27 @@ export default async function PackageDetailPage({
       <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-ink-muted">
         {pkg.description}
       </p>
+
+      {pkg.locations.filter((l) => l.isActive).length > 0 && (
+        <div className="mt-10">
+          <h2 className="mb-3 font-display text-lg text-pine-900">Places you&apos;ll visit</h2>
+          <p className="mb-3 text-sm text-ink-muted">
+            Included by default when you request this package — deselect any you&apos;d rather skip.
+          </p>
+          <ul className="space-y-2">
+            {pkg.locations
+              .filter((l) => l.isActive)
+              .map((loc) => (
+                <li key={loc.id} className="flex items-start justify-between gap-3 text-sm text-ink-muted">
+                  <span>{loc.name}</span>
+                  <span className="shrink-0 font-medium text-pine-900">
+                    {pkg.currency} {Number(loc.price).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-10 grid gap-8 sm:grid-cols-2">
         <div>
@@ -105,41 +127,34 @@ export default async function PackageDetailPage({
           <p className="mb-3 text-sm text-ink-muted">
             Pick where you&apos;ll stay when you request this package.
           </p>
-          <div className="space-y-5">
-            {groupByStarRating(pkg.accommodations.filter((a) => a.isActive)).map(([starRating, accs]) => (
-              <div key={starRating}>
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-pine-900">
-                  <span className="inline-flex items-center gap-0.5">
-                    {Array.from({ length: starRating }).map((_, i) => (
-                      <Star key={i} className="h-3 w-3 fill-brass-500 text-brass-500" />
-                    ))}
-                  </span>
-                  <span>{starRating} Star</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {accs.map((acc) => (
-                    <div key={acc.id} className="overflow-hidden rounded-lg border border-black/10">
-                      <div className="relative aspect-[4/3] w-full bg-pine-100">
-                        {acc.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={acc.image} alt={acc.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-pine-700">
-                            <Home className="h-6 w-6" />
-                          </div>
-                        )}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {groupByStarRating(pkg.accommodations.filter((a) => a.isActive))
+              .flatMap(([, accs]) => accs)
+              .map((acc) => (
+                <div key={acc.id} className="overflow-hidden rounded-lg border border-black/10">
+                  <div className="relative aspect-[4/3] w-full bg-pine-100">
+                    {acc.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={acc.image} alt={acc.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-pine-700">
+                        <Home className="h-6 w-6" />
                       </div>
-                      <div className="p-2">
-                        <p className="line-clamp-1 text-sm font-medium text-pine-900">{acc.name}</p>
-                        <p className="text-xs text-ink-muted">
-                          +{pkg.currency} {Number(acc.price).toLocaleString()}
-                        </p>
-                      </div>
+                    )}
+                    <div className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+                      {Array.from({ length: acc.starRating }).map((_, i) => (
+                        <Star key={i} className="h-2.5 w-2.5 fill-white text-white" />
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  <div className="p-2">
+                    <p className="line-clamp-1 text-sm font-medium text-pine-900">{acc.name}</p>
+                    <p className="text-xs text-ink-muted">
+                      +{pkg.currency} {Number(acc.price).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}

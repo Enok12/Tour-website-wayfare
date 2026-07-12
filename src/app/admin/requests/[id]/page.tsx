@@ -99,6 +99,16 @@ export default function AdminRequestDetailPage({ params }: { params: Promise<{ i
                     <p className="font-medium text-text-primary">{selection.package.name}</p>
                     <p className="font-medium text-text-primary">${selection.priceAtBooking}</p>
                   </div>
+                  {selection.locations.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-sm text-text-secondary">
+                      {selection.locations.map((loc) => (
+                        <li key={loc.id} className="flex items-center justify-between">
+                          <span>{loc.packageLocation.name}</span>
+                          <span>${loc.priceAtBooking}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <div className="mt-2 flex items-center justify-between text-sm text-text-secondary">
                     <span>Accommodation: {selection.accommodation.name}</span>
                     <span>${selection.accommodationPriceAtBooking}</span>

@@ -35,7 +35,15 @@ export function CustomizeForm({
   } = useForm<z.input<typeof createTourRequestSchema>, unknown, z.output<typeof createTourRequestSchema>>({
     resolver: zodResolver(createTourRequestSchema),
     defaultValues: {
-      packages: preselected ? [{ packageId: preselected.id, attributeIds: [] }] : [],
+      packages: preselected
+        ? [
+            {
+              packageId: preselected.id,
+              locationIds: preselected.locations.filter((loc) => loc.isActive).map((loc) => loc.id),
+              attributeIds: [],
+            },
+          ]
+        : [],
       numberOfTravelers: 2,
       preferredDestinations: [],
       activities: [],

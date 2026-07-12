@@ -2,6 +2,7 @@ import { prisma } from "@/server/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 const attributesInclude = {
+  locations: { orderBy: { sortOrder: "asc" } },
   attributes: { orderBy: { sortOrder: "asc" } },
   accommodations: { orderBy: { sortOrder: "asc" } },
 } satisfies Prisma.TourPackageInclude;

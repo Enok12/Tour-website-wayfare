@@ -7,6 +7,7 @@ const detailInclude = {
     include: {
       package: true,
       accommodation: true,
+      locations: { include: { packageLocation: true } },
       attributes: { include: { packageAttribute: true } },
     },
   },

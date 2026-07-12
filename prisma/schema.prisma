@@ -97,7 +97,6 @@ model TourPackage {
   slug              String        @unique
   description       String
   durationDays      Int
-  price             Decimal       @db.Decimal(10, 2)
   currency          String        @default("USD")
   coverImage        String?
   galleryImages     String[]      @default([])
@@ -107,11 +106,38 @@ model TourPackage {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
+  locations         PackageLocation[]
   attributes        PackageAttribute[]
   accommodations    PackageAccommodation[]
   requestSelections TourRequestPackage[]
 
   @@map("tour_packages")
+}
+
+// ---------------------------------------------------------------------------
+// Package Locations - admin-defined itinerary stops that make up a package
+// (e.g. "Temple of the Tooth" for the Kandy package), each individually
+// priced. Included by default; the customer can deselect ones they don't
+// want (down to a minimum of 1). A package's price is the sum of the
+// customer's selected locations, plus any selected attributes/accommodation.
+// ---------------------------------------------------------------------------
+
+model PackageLocation {
+  id          String       @id @default(cuid())
+  packageId   String
+  package     TourPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal      @db.Decimal(10, 2)
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  selections  TourRequestPackageLocation[]
+
+  @@index([packageId])
+  @@map("package_locations")
 }
 
 // ---------------------------------------------------------------------------
@@ -226,11 +252,27 @@ model TourRequestPackage {
   priceAtBooking Decimal      @db.Decimal(10, 2)
   createdAt      DateTime     @default(now())
 
+  locations      TourRequestPackageLocation[]
   attributes     TourRequestPackageAttribute[]
 
   @@unique([tourRequestId, packageId])
   @@index([tourRequestId])
   @@map("tour_request_packages")
+}
+
+model TourRequestPackageLocation {
+  id                   String              @id @default(cuid())
+
+  tourRequestPackageId String
+  tourRequestPackage   TourRequestPackage  @relation(fields: [tourRequestPackageId], references: [id], onDelete: Cascade)
+
+  packageLocationId    String
+  packageLocation      PackageLocation     @relation(fields: [packageLocationId], references: [id])
+
+  priceAtBooking       Decimal             @db.Decimal(10, 2)
+
+  @@unique([tourRequestPackageId, packageLocationId])
+  @@map("tour_request_package_locations")
 }
 
 model TourRequestPackageAttribute {

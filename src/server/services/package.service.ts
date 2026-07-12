@@ -1,4 +1,5 @@
 import { packageRepository } from "@/server/repositories/package.repository";
+import { packageLocationRepository } from "@/server/repositories/package-location.repository";
 import { packageAttributeRepository } from "@/server/repositories/package-attribute.repository";
 import { packageAccommodationRepository } from "@/server/repositories/package-accommodation.repository";
 import { ConflictError, NotFoundError } from "@/server/lib/errors";
@@ -6,9 +7,44 @@ import type {
   CreatePackageInput,
   PackageAccommodationInput,
   PackageAttributeInput,
+  PackageLocationInput,
   UpdatePackageInput,
 } from "@/server/dto/package.dto";
-import type { PackageAccommodation, PackageAttribute } from "@prisma/client";
+import type { PackageAccommodation, PackageAttribute, PackageLocation } from "@prisma/client";
+
+/**
+ * Same create/update/soft-disable diffing as syncAttributes, but for a
+ * package's itinerary locations. A location already selected on a submitted
+ * tour request can't be hard-deleted (FK restrict) — soft-disabled instead.
+ */
+async function syncLocations(packageId: string, existing: PackageLocation[], incoming: PackageLocationInput[]) {
+  const incomingIds = new Set(incoming.filter((l) => l.id).map((l) => l.id));
+
+  for (const loc of existing) {
+    if (!incomingIds.has(loc.id)) {
+      try {
+        await packageLocationRepository.delete(loc.id);
+      } catch {
+        await packageLocationRepository.update(loc.id, { isActive: false });
+      }
+    }
+  }
+
+  for (const [index, loc] of incoming.entries()) {
+    const data = {
+      name: loc.name,
+      description: loc.description || null,
+      price: loc.price,
+      isActive: loc.isActive,
+      sortOrder: index,
+    };
+    if (loc.id) {
+      await packageLocationRepository.update(loc.id, data);
+    } else {
+      await packageLocationRepository.create({ ...data, package: { connect: { id: packageId } } });
+    }
+  }
+}
 
 /**
  * Diffs the incoming attribute list against what's currently stored: updates
@@ -135,13 +171,21 @@ export const packageService = {
       slug,
       description: input.description,
       durationDays: input.durationDays,
-      price: input.price,
       currency: input.currency,
       coverImage: input.coverImage || null,
       galleryImages: input.galleryImages,
       includedServices: input.includedServices,
       excludedServices: input.excludedServices,
       isActive: input.isActive,
+      locations: {
+        create: input.locations.map((loc, index) => ({
+          name: loc.name,
+          description: loc.description || null,
+          price: loc.price,
+          isActive: loc.isActive,
+          sortOrder: index,
+        })),
+      },
       attributes: {
         create: input.attributes.map((attr, index) => ({
           name: attr.name,
@@ -178,7 +222,6 @@ export const packageService = {
       ...(slug ? { slug } : {}),
       ...(input.description ? { description: input.description } : {}),
       ...(input.durationDays !== undefined ? { durationDays: input.durationDays } : {}),
-      ...(input.price !== undefined ? { price: input.price } : {}),
       ...(input.currency ? { currency: input.currency } : {}),
       ...(input.coverImage !== undefined ? { coverImage: input.coverImage || null } : {}),
       ...(input.galleryImages ? { galleryImages: input.galleryImages } : {}),
@@ -186,6 +229,10 @@ export const packageService = {
       ...(input.excludedServices ? { excludedServices: input.excludedServices } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     });
+
+    if (input.locations) {
+      await syncLocations(id, existing.locations, input.locations);
+    }
 
     if (input.attributes) {
       await syncAttributes(id, existing.attributes, input.attributes);
