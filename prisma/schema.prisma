@@ -1,0 +1,302 @@
+// Tour Management Platform - Database Schema
+// Clean, normalized relational schema designed to support the
+// modules listed under "Future Scalability" without breaking changes
+// (payments, vehicles, drivers, reviews, chat, GPS tracking, etc.)
+// by keeping entities narrow and relation-friendly.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum TourRequestStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MemberTourStatus {
+  ACCEPTED
+  STARTED
+  COMPLETED
+}
+
+// ---------------------------------------------------------------------------
+// Users (Admin + Member share one table; Customers do not log in and are
+// modeled separately below)
+// ---------------------------------------------------------------------------
+
+model User {
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  passwordHash       String
+  phone              String?
+  role               Role                @default(MEMBER)
+  profileImage       String?
+  languages          String[]            @default([])
+  availabilityStatus AvailabilityStatus  @default(OFFLINE)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  assignmentsMade    Assignment[]        @relation("AssignedBy")
+  assignmentsHeld     Assignment[]       @relation("AssignedTo")
+  activityLogs       ActivityLog[]
+
+  @@index([role])
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Customers - no login. Deduplicated by email so repeat customers accumulate
+// a history of requests.
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id           String        @id @default(cuid())
+  fullName     String
+  email        String        @unique
+  phone        String
+  country      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  tourRequests TourRequest[]
+
+  @@map("customers")
+}
+
+// ---------------------------------------------------------------------------
+// Tour Packages
+// ---------------------------------------------------------------------------
+
+model TourPackage {
+  id                String        @id @default(cuid())
+  name              String
+  slug              String        @unique
+  description       String
+  durationDays      Int
+  price             Decimal       @db.Decimal(10, 2)
+  currency          String        @default("USD")
+  coverImage        String?
+  galleryImages     String[]      @default([])
+  includedServices  String[]      @default([])
+  excludedServices  String[]      @default([])
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  attributes        PackageAttribute[]
+  accommodations    PackageAccommodation[]
+  requestSelections TourRequestPackage[]
+
+  @@map("tour_packages")
+}
+
+// ---------------------------------------------------------------------------
+// Package Attributes - admin-defined, per-package selectable sub-locations
+// / activities (e.g. "Temple of the Tooth" for the Kandy package), each with
+// its own price. Customers pick a subset per package when customizing a trip.
+// ---------------------------------------------------------------------------
+
+model PackageAttribute {
+  id          String       @id @default(cuid())
+  packageId   String
+  package     TourPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal      @db.Decimal(10, 2)
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  selections  TourRequestPackageAttribute[]
+
+  @@index([packageId])
+  @@map("package_attributes")
+}
+
+// ---------------------------------------------------------------------------
+// Package Accommodations - admin-defined hotel/stay options per package
+// (e.g. "Jetwing Kandy Gallery - Luxury"), each with its own photo and price.
+// Customers pick exactly one per selected package.
+// ---------------------------------------------------------------------------
+
+model PackageAccommodation {
+  id          String       @id @default(cuid())
+  packageId   String
+  package     TourPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  image       String?
+  starRating  Int          @default(3)
+  price       Decimal      @db.Decimal(10, 2)
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  selections  TourRequestPackage[]
+
+  @@index([packageId])
+  @@map("package_accommodations")
+}
+
+// ---------------------------------------------------------------------------
+// Tour Requests - created either from "Customize Your Tour" or by picking an
+// existing package. This is the central booking entity.
+// ---------------------------------------------------------------------------
+
+model TourRequest {
+  id                   String             @id @default(cuid())
+  bookingReference     String             @unique
+
+  customerId           String
+  customer             Customer           @relation(fields: [customerId], references: [id])
+
+  packages              TourRequestPackage[]
+  estimatedTotal        Decimal?           @db.Decimal(10, 2)
+
+  travelDateStart       DateTime
+  travelDateEnd         DateTime?
+  numberOfTravelers     Int                @default(1)
+  preferredDestinations String[]          @default([])
+  hotelPreference       String?
+  budget                Decimal?           @db.Decimal(10, 2)
+  activities            String[]          @default([])
+  specialRequests       String?
+  pickupDetails         String?
+
+  status                TourRequestStatus  @default(PENDING)
+  internalNotes         String?
+
+  createdAt             DateTime           @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  assignment             Assignment?
+  activityLogs            ActivityLog[]
+
+  @@index([status])
+  @@index([bookingReference])
+  @@map("tour_requests")
+}
+
+// ---------------------------------------------------------------------------
+// Tour Request <-> Package selections - a request can bundle multiple
+// packages (e.g. Kandy + Dambulla + Trincomalee) in one booking. Prices are
+// snapshotted at booking time so later admin price edits don't retroactively
+// change historical bookings.
+// ---------------------------------------------------------------------------
+
+model TourRequestPackage {
+  id             String       @id @default(cuid())
+
+  tourRequestId  String
+  tourRequest    TourRequest  @relation(fields: [tourRequestId], references: [id], onDelete: Cascade)
+
+  packageId      String
+  package        TourPackage  @relation(fields: [packageId], references: [id])
+
+  accommodationId             String
+  accommodation                PackageAccommodation @relation(fields: [accommodationId], references: [id])
+  accommodationPriceAtBooking  Decimal              @db.Decimal(10, 2)
+
+  priceAtBooking Decimal      @db.Decimal(10, 2)
+  createdAt      DateTime     @default(now())
+
+  attributes     TourRequestPackageAttribute[]
+
+  @@unique([tourRequestId, packageId])
+  @@index([tourRequestId])
+  @@map("tour_request_packages")
+}
+
+model TourRequestPackageAttribute {
+  id                   String              @id @default(cuid())
+
+  tourRequestPackageId String
+  tourRequestPackage   TourRequestPackage  @relation(fields: [tourRequestPackageId], references: [id], onDelete: Cascade)
+
+  packageAttributeId   String
+  packageAttribute     PackageAttribute    @relation(fields: [packageAttributeId], references: [id])
+
+  priceAtBooking       Decimal             @db.Decimal(10, 2)
+
+  @@unique([tourRequestPackageId, packageAttributeId])
+  @@map("tour_request_package_attributes")
+}
+
+// ---------------------------------------------------------------------------
+// Assignment - one active assignment per tour request. Modeled as its own
+// table (rather than a column on TourRequest) so reassignment history and
+// per-member status can grow independently later (e.g. multi-guide tours).
+// ---------------------------------------------------------------------------
+
+model Assignment {
+  id             String            @id @default(cuid())
+
+  tourRequestId  String            @unique
+  tourRequest    TourRequest       @relation(fields: [tourRequestId], references: [id])
+
+  memberId       String
+  member         User              @relation("AssignedTo", fields: [memberId], references: [id])
+
+  assignedById   String
+  assignedBy     User              @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  memberStatus   MemberTourStatus?
+
+  assignedAt     DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([memberId])
+  @@map("assignments")
+}
+
+// ---------------------------------------------------------------------------
+// Activity Log - lightweight audit trail. Generic enough to log actions on
+// any entity type without needing new tables per feature.
+// ---------------------------------------------------------------------------
+
+model ActivityLog {
+  id            String        @id @default(cuid())
+
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+
+  action        String
+  entityType    String
+  entityId      String
+
+  tourRequestId String?
+  tourRequest   TourRequest?  @relation(fields: [tourRequestId], references: [id])
+
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}

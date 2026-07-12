@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand palette -- a hand-curated tour operator, not an algorithmic
+     marketplace. Deep pine + brass, deliberately not the cream/terracotta
+     combination that reads as an AI-generated default. */
+  --pine-950: #0e1f1a;
+  --pine-900: #16302a;
+  --pine-800: #1f4038;
+  --pine-700: #2c5347;
+  --pine-600: #3c6b5c;
+  --pine-100: #dde8e2;
+  --pine-50: #eef3f0;
+
+  --linen: #f1f4ee;
+  --linen-dark: #e7ebe1;
+
+  --brass-600: #a97a1f;
+  --brass-500: #b8862e;
+  --brass-400: #cc9d47;
+  --brass-100: #f3e6c9;
+
+  --ink: #1c2621;
+  --ink-muted: #5b6b62;
+
+  --background: var(--linen);
+  --foreground: var(--ink);
+
+  /* Neutral system used by the admin/member dashboards (Stripe/Linear/Notion
+     inspired) -- deliberately unbranded/quiet so data is the focus. */
+  --surface: #ffffff;
+  --surface-muted: #f7f7f8;
+  --border-subtle: #e6e6e9;
+  --text-primary: #18181b;
+  --text-secondary: #6b6b74;
+  --accent: var(--pine-800);
+  --accent-foreground: #ffffff;
+
+  --danger: #b3261e;
+  --warning: #a15c07;
+  --success: #1e7a4c;
+  --info: #1d5fa8;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-pine-950: var(--pine-950);
+  --color-pine-900: var(--pine-900);
+  --color-pine-800: var(--pine-800);
+  --color-pine-700: var(--pine-700);
+  --color-pine-600: var(--pine-600);
+  --color-pine-100: var(--pine-100);
+  --color-pine-50: var(--pine-50);
+
+  --color-linen: var(--linen);
+  --color-linen-dark: var(--linen-dark);
+
+  --color-brass-600: var(--brass-600);
+  --color-brass-500: var(--brass-500);
+  --color-brass-400: var(--brass-400);
+  --color-brass-100: var(--brass-100);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-info: var(--info);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+.dark {
+  --surface: #17181a;
+  --surface-muted: #1f2023;
+  --border-subtle: #2a2b2f;
+  --text-primary: #f2f2f3;
+  --text-secondary: #9a9aa2;
+  --background: #101113;
+  --foreground: #f2f2f3;
+}
+
+* {
+  border-color: var(--border-subtle);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Visible keyboard focus everywhere -- no outline: none anywhere in this app. */
+:focus-visible {
+  outline: 2px solid var(--brass-500);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
