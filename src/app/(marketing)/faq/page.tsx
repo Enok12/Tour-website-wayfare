@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/landing/page-header";
+
 const faqs = [
   {
     q: "Is this like Uber, where I get matched automatically?",
@@ -27,11 +29,8 @@ const faqs = [
 
 export default function FaqPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <p className="mb-3 font-display italic text-brass-600">FAQ</p>
-      <h1 className="font-sans text-4xl font-bold tracking-tight text-pine-950 sm:text-5xl">
-        Frequently asked questions
-      </h1>
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-32 sm:px-6">
+      <PageHeader eyebrow="FAQ" title="Frequently asked questions" />
 
       <dl className="mt-12 divide-y divide-black/5">
         {faqs.map((faq) => (

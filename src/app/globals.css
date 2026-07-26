@@ -95,8 +95,14 @@
   --foreground: #f2f2f3;
 }
 
-* {
-  border-color: var(--border-subtle);
+/* Layered so Tailwind's own border-color utilities (border-transparent,
+   border-black/5, etc.) can override this default -- an unlayered rule here
+   would otherwise always win over utilities regardless of specificity, per
+   CSS cascade layer rules, silently breaking any "no border" utility. */
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
 }
 
 body {

@@ -4,10 +4,10 @@ import { Logo } from "@/components/shared/logo";
 export function Footer() {
   return (
     <footer className="border-t border-black/5 bg-pine-950 text-linen">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Logo dark className="mb-3" />
+            <Logo dark className="mb-4 text-xl" />
             <p className="max-w-xs text-sm text-pine-100/80">
               Every trip is reviewed and matched by hand to one of our trusted local guides --
               never an algorithm.

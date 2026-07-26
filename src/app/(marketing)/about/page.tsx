@@ -1,4 +1,7 @@
-import { ShieldCheck, Compass, HeartHandshake } from "lucide-react";
+import { ShieldCheck, Compass, HeartHandshake, MapPin } from "lucide-react";
+import { PageHeader } from "@/components/landing/page-header";
+import { serverFetch } from "@/lib/server-fetch";
+import type { PackageDto } from "@/types";
 
 const values = [
   {
@@ -18,28 +21,42 @@ const values = [
   },
 ];
 
-export default function AboutPage() {
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <p className="mb-3 font-display italic text-brass-600">About us</p>
-      <h1 className="max-w-2xl font-sans text-4xl font-bold tracking-tight text-pine-950 sm:text-5xl">
-        We started this because trip planning shouldn&apos;t feel automated.
-      </h1>
-      <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-muted">
-        Wayfare began as one person personally organizing tours for friends, then friends of
-        friends. As requests grew past what any one person could run alone, we built a small
-        team of trusted guides -- but kept the part that mattered: every request is still read
-        and matched by hand, never handed off to a matching algorithm.
-      </p>
+export default async function AboutPage() {
+  const res = await serverFetch<PackageDto[]>("/api/packages");
+  const packages = res.success ? res.data : [];
+  const bandImage = packages.find((pkg) => pkg.coverImage)?.coverImage;
 
-      <div className="mt-14 grid gap-8 sm:grid-cols-3">
-        {values.map((value) => (
-          <div key={value.title}>
-            <value.icon className="h-6 w-6 text-brass-600" />
-            <h3 className="mt-3 font-display text-lg text-pine-900">{value.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{value.body}</p>
+  return (
+    <div>
+      <div className="mx-auto max-w-4xl px-4 pb-16 pt-32 sm:px-6">
+        <PageHeader
+          eyebrow="About us"
+          title="We started this because trip planning shouldn't feel automated."
+          subtitle="Wayfare began as one person personally organizing tours for friends, then friends of friends. As requests grew past what any one person could run alone, we built a small team of trusted guides -- but kept the part that mattered: every request is still read and matched by hand, never handed off to a matching algorithm."
+        />
+      </div>
+
+      <div className="relative aspect-[21/9] w-full overflow-hidden bg-pine-900">
+        {bandImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={bandImage} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-pine-700/40">
+            <MapPin className="h-16 w-16" strokeWidth={0.75} />
           </div>
-        ))}
+        )}
+      </div>
+
+      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+        <div className="grid gap-8 sm:grid-cols-3">
+          {values.map((value) => (
+            <div key={value.title}>
+              <value.icon className="h-6 w-6 text-brass-600" />
+              <h3 className="mt-3 font-display text-lg text-pine-900">{value.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{value.body}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

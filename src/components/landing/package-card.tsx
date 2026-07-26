@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
-import { packageStartingPrice } from "@/lib/package-pricing";
 import type { PackageDto } from "@/types";
 
 export function PackageCard({ pkg }: { pkg: PackageDto }) {
+  const activeLocations = pkg.locations.filter((loc) => loc.isActive);
+  const tasteOfLocations = activeLocations
+    .slice(0, 3)
+    .map((loc) => loc.name)
+    .join(" · ");
+
   return (
     <Link
       href={`/packages/${pkg.slug}`}
@@ -25,15 +30,23 @@ export function PackageCard({ pkg }: { pkg: PackageDto }) {
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
         <h3 className="font-display text-lg text-pine-900">{pkg.name}</h3>
+        {tasteOfLocations && (
+          <p className="text-xs font-medium uppercase tracking-wide text-brass-600">
+            {tasteOfLocations}
+          </p>
+        )}
         <p className="line-clamp-2 flex-1 text-sm text-ink-muted">{pkg.description}</p>
-        <div className="mt-2 flex items-center justify-between border-t border-black/5 pt-3">
-          <span className="inline-flex items-center gap-1 text-xs text-ink-muted">
+        <div className="mt-2 flex items-center justify-between border-t border-black/5 pt-3 text-xs text-ink-muted">
+          <span className="inline-flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
             {pkg.durationDays} {pkg.durationDays === 1 ? "day" : "days"}
           </span>
-          <span className="font-display text-base text-brass-600">
-            from {pkg.currency} {packageStartingPrice(pkg).toLocaleString()}
-          </span>
+          {activeLocations.length > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
+              {activeLocations.length} {activeLocations.length === 1 ? "place" : "places"} to visit
+            </span>
+          )}
         </div>
       </div>
     </Link>

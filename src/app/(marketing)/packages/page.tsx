@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/landing/page-header";
 import { PackageCard } from "@/components/landing/package-card";
 import { serverFetch } from "@/lib/server-fetch";
 import type { PackageDto } from "@/types";
@@ -7,18 +9,15 @@ export default async function PackagesPage() {
   const packages = res.success ? res.data : [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <p className="mb-3 font-display italic text-brass-600">Tour packages</p>
-      <h1 className="max-w-2xl font-sans text-4xl font-bold tracking-tight text-pine-950 sm:text-5xl">
-        Ready-made trips, still personally guided
-      </h1>
-      <p className="mt-4 max-w-xl text-lg text-ink-muted">
-        Prefer a starting point? Pick a package below, or{" "}
-        <a href="/customize" className="text-brass-600 underline underline-offset-2">
-          build your own
-        </a>
-        .
-      </p>
+    <div className="mx-auto max-w-6xl px-4 pb-16 pt-32 sm:px-6">
+      <PageHeader
+        eyebrow="Tour packages"
+        title="Ready-made trips, still personally guided"
+        subtitle="Prefer a starting point? Pick a destination below and see what's included, or build your own from scratch."
+      />
+      <Link href="/customize" className="mt-2 inline-block text-brass-600 underline underline-offset-2">
+        Build your own trip instead
+      </Link>
 
       {packages.length === 0 ? (
         <div className="mt-16 rounded-xl border border-dashed border-pine-700/30 p-12 text-center text-ink-muted">

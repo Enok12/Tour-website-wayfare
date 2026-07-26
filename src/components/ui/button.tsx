@@ -10,6 +10,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-accent text-accent-foreground hover:opacity-90",
         brand: "bg-pine-900 text-white hover:bg-pine-800",
+        brassSolid: "bg-brass-600 text-white hover:bg-brass-500",
         brassOutline:
           "border border-brass-500 text-brass-600 bg-transparent hover:bg-brass-100",
         destructive: "bg-danger text-white hover:opacity-90",

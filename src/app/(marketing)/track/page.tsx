@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTrackBooking } from "@/hooks/use-tracking";
+import { PageHeader } from "@/components/landing/page-header";
 import { cn } from "@/lib/utils";
 import type { TourRequestStatus } from "@prisma/client";
 
@@ -41,14 +42,12 @@ function TrackPageInner() {
   const currentStep = result ? stepIndex(result.status) : -1;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <p className="mb-3 font-display italic text-brass-600">Track your booking</p>
-      <h1 className="font-sans text-4xl font-bold tracking-tight text-pine-950 sm:text-5xl">
-        Where&apos;s my trip at?
-      </h1>
-      <p className="mt-4 text-lg text-ink-muted">
-        Enter the booking reference you received after submitting your request.
-      </p>
+    <div className="mx-auto max-w-2xl px-4 pb-16 pt-32 sm:px-6">
+      <PageHeader
+        eyebrow="Track your booking"
+        title="Where's my trip at?"
+        subtitle="Enter the booking reference you received after submitting your request."
+      />
 
       <form onSubmit={handleSubmit} className="mt-8 flex gap-3">
         <Input

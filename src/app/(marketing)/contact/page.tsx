@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/landing/page-header";
 
 const channels = [
   { icon: Mail, label: "Email", value: "hello@wayfare-tours.example", href: "mailto:hello@wayfare-tours.example" },
@@ -10,19 +11,19 @@ const channels = [
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <p className="mb-3 font-display italic text-brass-600">Get in touch</p>
-      <h1 className="font-sans text-4xl font-bold tracking-tight text-pine-950 sm:text-5xl">
-        We&apos;d love to hear from you
-      </h1>
-      <p className="mt-4 max-w-xl text-lg text-ink-muted">
-        Have a question before you book, or already traveling and need help? Reach out directly
-        -- a person will get back to you, not a ticketing queue.
-      </p>
+    <div className="mx-auto max-w-4xl px-4 pb-16 pt-32 sm:px-6">
+      <PageHeader
+        eyebrow="Get in touch"
+        title="We'd love to hear from you"
+        subtitle="Have a question before you book, or already traveling and need help? Reach out directly -- a person will get back to you, not a ticketing queue."
+      />
 
       <div className="mt-12 grid gap-6 sm:grid-cols-3">
         {channels.map((channel) => (
-          <div key={channel.label} className="rounded-xl border border-black/5 bg-white p-6 shadow-sm">
+          <div
+            key={channel.label}
+            className="rounded-xl border border-black/5 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+          >
             <channel.icon className="h-6 w-6 text-brass-600" />
             <p className="mt-3 text-xs font-medium uppercase tracking-wide text-ink-muted">
               {channel.label}
