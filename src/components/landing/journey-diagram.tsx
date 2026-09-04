@@ -1,60 +1,50 @@
 const steps = [
   {
-    n: "1",
+    n: "01",
     title: "You tell us your trip",
-    body: "Share your dates, destinations, and the kind of trip you're after -- as little or as much detail as you like.",
+    body: "Share your dates, the places you have in mind, and the kind of trip you are after — as little or as much detail as you like.",
   },
   {
-    n: "2",
+    n: "02",
     title: "We personally review it",
-    body: "A real person on our team reads every request. No queue, no bot triage.",
+    body: "A real person on our team reads every request. No queue, no bot triage, no automated scoring.",
   },
   {
-    n: "3",
+    n: "03",
     title: "We match you with a guide",
-    body: "We hand-pick one of our trusted guides based on who's free and who fits your trip best.",
+    body: "We hand-pick one of our trusted guides based on who is free and who genuinely fits your trip.",
   },
   {
-    n: "4",
+    n: "04",
     title: "You travel, guided",
-    body: "Your guide takes it from there, in touch with you the whole way through.",
+    body: "Your guide takes it from there, in touch with you the whole way through the island.",
   },
 ];
 
+/**
+ * Numbered waypoints on a gold rule. Stacks to a single column on mobile and
+ * pairs up from `sm`, which keeps it legible inside the narrower homepage
+ * column as well as full width on /about.
+ */
 export function JourneyDiagram() {
   return (
-    <div className="relative">
-      {/* Dotted route line connecting the waypoints -- desktop only */}
-      <svg
-        className="pointer-events-none absolute left-0 top-8 hidden w-full lg:block"
-        height="4"
-        viewBox="0 0 1000 4"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <line
-          x1="60"
-          y1="2"
-          x2="940"
-          y2="2"
-          stroke="var(--pine-700)"
-          strokeWidth="2"
-          strokeDasharray="1 10"
-          strokeLinecap="round"
-        />
-      </svg>
-
-      <ol className="grid gap-8 lg:grid-cols-4">
-        {steps.map((step) => (
-          <li key={step.n} className="relative flex flex-col items-start gap-3">
-            <span className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full border-2 border-pine-700 bg-linen font-display text-xl text-pine-900">
-              {step.n}
-            </span>
-            <h3 className="font-display text-lg text-pine-900">{step.title}</h3>
-            <p className="text-sm leading-relaxed text-ink-muted">{step.body}</p>
-          </li>
-        ))}
-      </ol>
-    </div>
+    <ol className="grid gap-x-10 gap-y-9 sm:grid-cols-2">
+      {steps.map((step) => (
+        <li key={step.n} className="relative border-t border-pine-900/12 pt-5">
+          {/* Gold segment marking the start of each waypoint's rule. */}
+          <span
+            aria-hidden="true"
+            className="absolute -top-px left-0 h-px w-10 bg-brass-500"
+          />
+          <p className="font-display text-[0.9375rem] font-semibold tracking-[0.1em] text-brass-600">
+            {step.n}
+          </p>
+          <h3 className="mt-2 font-display text-[1.3125rem] font-semibold leading-tight text-pine-900">
+            {step.title}
+          </h3>
+          <p className="mt-2 text-[0.875rem] leading-relaxed text-ink-muted">{step.body}</p>
+        </li>
+      ))}
+    </ol>
   );
 }

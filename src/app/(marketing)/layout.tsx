@@ -4,7 +4,7 @@ import { PageTransition } from "@/components/providers/page-transition";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-linen">
       <Navbar />
       <main className="flex-1">
         <PageTransition>{children}</PageTransition>
